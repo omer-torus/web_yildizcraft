@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ProductForm from "./ProductForm";
 import ProductList from "./components/ProductList";
-import { CartProvider } from "./contexts/CartContext";
+import { CartProvider, useCart } from "./contexts/CartContext";
 import CustomDesignForm from "./CustomDesignForm";
 import logo from "./logo.jpeg";
 import "./App.css";
@@ -22,6 +22,9 @@ function Hero() {
 }
 
 function Header() {
+  const { cart, getTotalPrice } = useCart();
+  const totalPrice = getTotalPrice();
+
   return (
     <header className="main-header">
       <div className="header-left">
@@ -37,7 +40,12 @@ function Header() {
         <Link to="/iletisim">İletişim</Link>
       </nav>
       <div className="header-cart">
-        <Link to="/sepet" className="cart-icon">🛒</Link>
+        <Link to="/sepet" className="cart-icon">
+          🛒
+          {cart.length > 0 && (
+            <span className="cart-total-price">{totalPrice} TL</span>
+          )}
+        </Link>
       </div>
     </header>
   );

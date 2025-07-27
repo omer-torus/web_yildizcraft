@@ -18,9 +18,13 @@ function ProductList() {
   const [stockWarning, setStockWarning] = useState({});
   const { addToCart, cart } = useCart();
 
-  useEffect(() => {
+  const fetchProducts = (category = null) => {
     setLoading(true);
-    axios.get("http://localhost:8000/products/")
+    const url = category && category !== "all" 
+      ? `http://localhost:8000/products/?category=${category}`
+      : "http://localhost:8000/products/";
+    
+    axios.get(url)
       .then(res => {
         setProducts(res.data);
         setLoading(false);
@@ -29,7 +33,15 @@ function ProductList() {
         setError("Ürünler yüklenemedi.");
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchProducts();
   }, []);
+
+  useEffect(() => {
+    fetchProducts(activeCategory);
+  }, [activeCategory]);
 
   const handleDelete = (id) => {
     axios.delete(`http://localhost:8000/products/${id}`)
@@ -55,16 +67,6 @@ function ProductList() {
     }, 1200);
   };
 
-  // Kategoriye göre filtreleme
-  const filteredProducts = activeCategory === "all"
-    ? products
-    : products.filter(product => {
-        if (activeCategory === "anahtarlik") return product.category === "anahtarlik";
-        if (activeCategory === "yedek") return product.category === "yedek";
-        if (activeCategory === "hediyelik") return product.category === "hediyelik";
-        return true;
-      });
-
   if (loading) return <div>Yükleniyor...</div>;
   if (error) return <div>{error}</div>;
 
@@ -84,10 +86,10 @@ function ProductList() {
         ))}
       </div>
       <div className="product-list">
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
           <p>Bu kategoride ürün yok.</p>
         ) : (
-          filteredProducts.map(product => {
+          products.map(product => {
             const cartItem = cart.find(item => item.id === product.id);
             const isOutOfStock = cartItem && cartItem.quantity >= product.stock;
             return (

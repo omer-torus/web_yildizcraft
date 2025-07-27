@@ -8,6 +8,7 @@ class ProductBase(BaseModel):
     price: float
     image_url: Optional[str] = None
     stock: int = 0
+    category: Optional[str] = None
 
 class ProductCreate(ProductBase):
     pass
@@ -16,7 +17,7 @@ class Product(ProductBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Order Schemas
 class OrderBase(BaseModel):
@@ -33,4 +34,4 @@ class Order(OrderBase):
     id: int
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 

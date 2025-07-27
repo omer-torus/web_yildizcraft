@@ -8,11 +8,14 @@ import schemas
 def get_product(db: Session, product_id: int):
     return db.query(models.Product).filter(models.Product.id == product_id).first()
 
-def get_products(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Product).offset(skip).limit(limit).all()
+def get_products(db: Session, skip: int = 0, limit: int = 100, category: str = None):
+    query = db.query(models.Product)
+    if category:
+        query = query.filter(models.Product.category == category)
+    return query.offset(skip).limit(limit).all()
 
 def create_product(db: Session, product: schemas.ProductCreate):
-    db_product = models.Product(**product.dict())
+    db_product = models.Product(**product.model_dump())
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
@@ -31,7 +34,7 @@ def get_orders(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Order).offset(skip).limit(limit).all()
 
 def create_order(db: Session, order: schemas.OrderCreate):
-    db_order = models.Order(**order.dict())
+    db_order = models.Order(**order.model_dump())
     # Ürün stoklarını azalt
     # order.products: '1x2,3x1' gibi (id x adet)
     for item in order.products.split(","):

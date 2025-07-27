@@ -55,7 +55,7 @@ function ProductForm({ onProductAdded }) {
       </select>
       <input
         type="number"
-        placeholder="Fiyat"
+        placeholder="Fiyat (TL)"
         value={price}
         onChange={e => setPrice(e.target.value)}
         required
