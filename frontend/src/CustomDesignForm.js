@@ -23,20 +23,34 @@ function CustomDesignForm() {
       alert("Lütfen bir .stl dosyası seçin.");
       return;
     }
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("description", description);
-    formData.append("file", file);
+
     try {
-      await axios.post("http://localhost:8000/upload-stl/", formData, {
+      // Önce dosyayı yükle
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("description", description);
+      formData.append("file", file);
+      
+      const uploadResponse = await axios.post("http://localhost:8000/upload-stl/", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
-      setMessage("Dosyanız başarıyla yüklendi!");
+
+      // Sonra custom design kaydını oluştur
+      const customDesignData = {
+        customer_name: name,
+        description: description,
+        file_path: uploadResponse.data.filename,
+        created_at: new Date().toISOString()
+      };
+
+      await axios.post("http://localhost:8000/custom-designs/", customDesignData);
+      
+      setMessage("Tasarım talebiniz başarıyla gönderildi! En kısa sürede size dönüş yapacağız.");
       setName("");
       setDescription("");
       setFile(null);
     } catch (error) {
-      setMessage("Yükleme sırasında hata oluştu!");
+      setMessage("Gönderim sırasında hata oluştu! Lütfen tekrar deneyin.");
     }
   };
 
@@ -63,7 +77,7 @@ function CustomDesignForm() {
         required
       />
       <button type="submit">Gönder</button>
-      {message && <p>{message}</p>}
+      {message && <p className="form-message">{message}</p>}
     </form>
   );
 }

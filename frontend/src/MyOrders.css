@@ -1,0 +1,167 @@
+.my-orders-page {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.my-orders-page h2 {
+  color: #1a2233;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+  padding: 40px;
+}
+
+.error-message {
+  text-align: center;
+  color: #dc3545;
+  font-size: 1.2rem;
+  padding: 40px;
+  background: #f8d7da;
+  border-radius: 8px;
+  border: 1px solid #f5c6cb;
+}
+
+.empty-orders {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-orders-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.empty-orders-text {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.order-item {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e0e0e0;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.order-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.order-header h3 {
+  color: #1a2233;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.order-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.order-total {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.order-status {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.order-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.order-status.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.order-status.cancelled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.order-details {
+  color: #666;
+  line-height: 1.6;
+}
+
+.order-details p {
+  margin: 8px 0;
+}
+
+.order-details strong {
+  color: #1a2233;
+}
+
+.order-products {
+  margin-top: 15px;
+}
+
+.order-products ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.order-products li {
+  margin: 5px 0;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .my-orders-page {
+    padding: 20px;
+  }
+  
+  .my-orders-page h2 {
+    font-size: 2rem;
+  }
+  
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .order-info {
+    width: 100%;
+    justify-content: space-between;
+  }
+} 
