@@ -35,6 +35,17 @@ def get_db():
     finally:
         db.close()
 
+# Admin oturum kontrolü için yardımcı fonksiyon
+def verify_admin_username(db: Session, admin_username: str):
+    if not admin_username:
+        raise HTTPException(status_code=401, detail="Admin oturumu gerekli")
+    
+    admin = crud.get_admin_by_username(db, admin_username)
+    if not admin:
+        raise HTTPException(status_code=401, detail="Geçersiz admin kullanıcısı")
+    
+    return admin
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the 3D Craft API"}
@@ -130,11 +141,53 @@ def read_product(product_id: int, db: Session = Depends(get_db)):
     return db_product
 
 @app.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_product(product_id: int, db: Session = Depends(get_db)):
-    success = crud.delete_product(db, product_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return
+async def delete_product(product_id: int, request: Request, db: Session = Depends(get_db)):
+    try:
+        # Admin oturumu kontrolü
+        body = await request.json()
+        admin_username = body.get("admin_username")
+        
+        # Admin kullanıcısını doğrula
+        verify_admin_username(db, admin_username)
+        
+        # Ürünü sil
+        success = crud.delete_product(db, product_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Product not found")
+        return
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ürün silme hatası: {str(e)}")
+
+@app.put("/products/{product_id}/stock")
+async def update_product_stock(product_id: int, request: Request, db: Session = Depends(get_db)):
+    try:
+        # Admin oturumu kontrolü
+        body = await request.json()
+        admin_username = body.get("admin_username")
+        new_stock = body.get("stock")
+        
+        if new_stock is None:
+            raise HTTPException(status_code=400, detail="Stok miktarı gerekli")
+        
+        # Admin kullanıcısını doğrula
+        verify_admin_username(db, admin_username)
+        
+        # Ürünü bul ve stokunu güncelle
+        product = crud.get_product(db, product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+        
+        product.stock = new_stock
+        db.commit()
+        db.refresh(product)
+        
+        return {"success": True, "message": f"Ürün stoku {new_stock} olarak güncellendi", "product": schemas.Product.from_orm(product)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Stok güncelleme hatası: {str(e)}")
 
 # Order Endpoints
 @app.post("/orders/", response_model=schemas.Order)

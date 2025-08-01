@@ -119,6 +119,7 @@ class Order(OrderBase):
 # Custom Design Schemas
 class CustomDesignBase(BaseModel):
     customer_name: str
+    customer_phone: str
     description: str
     file_path: Optional[str] = None
     created_at: str

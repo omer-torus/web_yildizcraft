@@ -10,44 +10,48 @@ function AdminPanel() {
   const [products, setProducts] = useState([]);
   const [activeTab, setActiveTab] = useState("custom-designs");
   const [adminUser, setAdminUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Admin oturumunu storage ile güncel tut
+  // Admin oturumunu kontrol et
   useEffect(() => {
     const checkAdminStatus = () => {
       const isLoggedIn = localStorage.getItem("adminLoggedIn");
       const adminData = localStorage.getItem("adminUser");
+      
       if (!isLoggedIn || !adminData) {
         setAdminUser(null);
-        navigate("/login");
+        setIsLoading(false);
+        navigate("/giris");
         return;
       }
+      
       try {
-        setAdminUser(JSON.parse(adminData));
+        const admin = JSON.parse(adminData);
+        setAdminUser(admin);
+        setIsLoading(false);
       } catch (error) {
+        console.error("Admin verisi parse edilemedi:", error);
         localStorage.removeItem("adminLoggedIn");
         localStorage.removeItem("adminUser");
         setAdminUser(null);
-        navigate("/login");
+        setIsLoading(false);
+        navigate("/giris");
         return;
       }
     };
+
     checkAdminStatus();
-    const handleStorageChange = (e) => {
-      if (e.key === "adminLoggedIn" || e.key === "adminUser") {
-        checkAdminStatus();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, [navigate]);
 
+  // Admin oturumu varsa verileri yükle
   useEffect(() => {
-    if (!adminUser) return;
-    fetchCustomDesigns();
-    fetchOrders();
-    fetchProducts();
-  }, [adminUser]);
+    if (adminUser && !isLoading) {
+      fetchCustomDesigns();
+      fetchOrders();
+      fetchProducts();
+    }
+  }, [adminUser, isLoading]);
 
   const fetchCustomDesigns = async () => {
     try {
@@ -94,7 +98,7 @@ function AdminPanel() {
     localStorage.removeItem("adminLoggedIn");
     localStorage.removeItem("adminUser");
     setAdminUser(null);
-    navigate("/login");
+    navigate("/giris");
   };
 
   const renderOrderProducts = (orderProducts) => {
@@ -111,8 +115,14 @@ function AdminPanel() {
     );
   };
 
-  if (!adminUser) {
+  // Loading durumu
+  if (isLoading) {
     return <div>Yükleniyor...</div>;
+  }
+
+  // Admin oturumu yoksa
+  if (!adminUser) {
+    return <div>Admin oturumu gerekli...</div>;
   }
 
   return (
@@ -141,6 +151,12 @@ function AdminPanel() {
           Siparişler ({orders.length})
         </button>
         <button 
+          className={`admin-tab ${activeTab === "products" ? "active" : ""}`}
+          onClick={() => setActiveTab("products")}
+        >
+          Ürünler ({products.length})
+        </button>
+        <button 
           className={`admin-tab ${activeTab === "add-product" ? "active" : ""}`}
           onClick={() => setActiveTab("add-product")}
         >
@@ -161,6 +177,7 @@ function AdminPanel() {
                     <h3>{design.customer_name}</h3>
                     <span className="design-date">{new Date(design.created_at).toLocaleDateString('tr-TR')}</span>
                   </div>
+                  <p className="design-phone">Telefon: {design.customer_phone}</p>
                   <p className="design-description">{design.description}</p>
                   {design.file_path && (
                     <p className="design-file">Dosya: {design.file_path}</p>
@@ -208,6 +225,69 @@ function AdminPanel() {
           </div>
         )}
 
+        {activeTab === "products" && (
+          <div className="products-list">
+            <h2>Ürünler</h2>
+            {products.length === 0 ? (
+              <p>Henüz ürün yok.</p>
+            ) : (
+              <div className="admin-products-grid">
+                {products.map(product => (
+                  <div key={product.id} className="admin-product-card">
+                    <div className="admin-product-image">
+                      {product.image_url ? (
+                        <img src={product.image_url} alt={product.name} />
+                      ) : (
+                        <div className="product-image-placeholder">📦</div>
+                      )}
+                    </div>
+                    <div className="admin-product-info">
+                      <h3>{product.name}</h3>
+                      <p>{product.description}</p>
+                      <div className="admin-product-details">
+                        <span className="price">{product.price} TL</span>
+                        <span className="stock">Stok: {product.stock}</span>
+                        <span className="category">{product.category}</span>
+                      </div>
+                      <div className="admin-product-actions">
+                        <div className="stock-edit-section">
+                          <input
+                            type="number"
+                            min="0"
+                            defaultValue={product.stock}
+                            className="stock-input"
+                            placeholder="Yeni stok"
+                            data-product-id={product.id}
+                          />
+                          <button 
+                            className="update-stock-btn"
+                            onClick={() => {
+                              const newStock = parseInt(document.querySelector(`input[data-product-id="${product.id}"]`).value);
+                              if (newStock >= 0) {
+                                handleUpdateStock(product.id, newStock);
+                              } else {
+                                alert("Stok miktarı 0 veya daha büyük olmalıdır.");
+                              }
+                            }}
+                          >
+                            Stok Güncelle
+                          </button>
+                        </div>
+                        <button 
+                          className="delete-product-btn"
+                          onClick={() => handleDeleteProduct(product.id)}
+                        >
+                          Ürünü Sil
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "add-product" && (
           <div className="add-product-section">
             <h2>Yeni Ürün Ekle</h2>
@@ -217,6 +297,46 @@ function AdminPanel() {
       </div>
     </div>
   );
+
+  async function handleDeleteProduct(productId) {
+    if (window.confirm("Bu ürünü silmek istediğinizden emin misiniz?")) {
+      try {
+        await axios.delete(`http://localhost:8000/products/${productId}`, {
+          data: {
+            admin_username: adminUser.username
+          }
+        });
+        fetchProducts(); // Ürünleri yeniden yükle
+      } catch (error) {
+        console.error("Ürün silinirken hata oluştu:", error);
+        if (error.response && error.response.status === 401) {
+          alert("Admin yetkisi gerekli. Lütfen tekrar giriş yapın.");
+          handleLogout();
+        } else {
+          alert("Ürün silinirken hata oluştu.");
+        }
+      }
+    }
+  }
+
+  async function handleUpdateStock(productId, newStock) {
+    try {
+      await axios.put(`http://localhost:8000/products/${productId}/stock`, {
+        admin_username: adminUser.username,
+        stock: newStock
+      });
+      fetchProducts(); // Ürünleri yeniden yükle
+      alert("Stok başarıyla güncellendi!");
+    } catch (error) {
+      console.error("Stok güncellenirken hata oluştu:", error);
+      if (error.response && error.response.status === 401) {
+        alert("Admin yetkisi gerekli. Lütfen tekrar giriş yapın.");
+        handleLogout();
+      } else {
+        alert("Stok güncellenirken hata oluştu.");
+      }
+    }
+  }
 }
 
 export default AdminPanel; 

@@ -3,6 +3,7 @@ import axios from "axios";
 
 function CustomDesignForm() {
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
@@ -38,6 +39,7 @@ function CustomDesignForm() {
       // Sonra custom design kaydını oluştur
       const customDesignData = {
         customer_name: name,
+        customer_phone: phone,
         description: description,
         file_path: uploadResponse.data.filename,
         created_at: new Date().toISOString()
@@ -47,6 +49,7 @@ function CustomDesignForm() {
       
       setMessage("Tasarım talebiniz başarıyla gönderildi! En kısa sürede size dönüş yapacağız.");
       setName("");
+      setPhone("");
       setDescription("");
       setFile(null);
     } catch (error) {
@@ -62,6 +65,13 @@ function CustomDesignForm() {
         placeholder="Ad Soyad"
         value={name}
         onChange={e => setName(e.target.value)}
+        required
+      />
+      <input
+        type="tel"
+        placeholder="Telefon Numarası"
+        value={phone}
+        onChange={e => setPhone(e.target.value)}
         required
       />
       <textarea

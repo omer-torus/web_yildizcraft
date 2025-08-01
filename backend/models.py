@@ -65,6 +65,7 @@ class CustomDesign(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     customer_name = Column(String)
+    customer_phone = Column(String)
     description = Column(String)
     file_path = Column(String, nullable=True)
     created_at = Column(String)  # ISO format string 
