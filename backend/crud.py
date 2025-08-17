@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 import hashlib
+import os
 
 import models
 import schemas
+from stl_analyzer import STLAnalyzer
 
 
 # User CRUD
@@ -243,9 +245,78 @@ def get_user_orders(db: Session, customer_name: str, customer_phone: str):
 def get_custom_designs(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.CustomDesign).offset(skip).limit(limit).all()
 
+def get_custom_design_by_id(db: Session, custom_design_id: int):
+    """ID'ye göre custom design getir"""
+    return db.query(models.CustomDesign).filter(models.CustomDesign.id == custom_design_id).first()
+
 def create_custom_design(db: Session, custom_design: schemas.CustomDesignCreate):
-    db_custom_design = models.CustomDesign(**custom_design.model_dump())
+    print(f"CRUD: Custom design oluşturuluyor - {custom_design}")
+    
+    # STL dosyası varsa analiz et
+    if custom_design.file_path:
+        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        stl_file_path = os.path.join(uploads_dir, custom_design.file_path)
+        
+        if os.path.exists(stl_file_path):
+            analyzer = STLAnalyzer()
+            analysis_result = analyzer.analyze_stl_file(stl_file_path)
+            
+            if analysis_result:
+                # Analiz sonuçlarını custom design verisine ekle
+                custom_design_data = custom_design.model_dump()
+                custom_design_data.update({
+                    'weight_grams': analysis_result['weight_grams'],
+                    'print_time_hours': analysis_result['print_time_hours'],
+                    'sales_price': analysis_result['sales_price'],
+                    'infill_ratio': analysis_result['infill_ratio']
+                })
+                
+                print(f"CRUD: Analiz sonuçları eklendi - {custom_design_data}")
+                db_custom_design = models.CustomDesign(**custom_design_data)
+            else:
+                # Analiz başarısız olursa normal şekilde oluştur
+                print(f"CRUD: Analiz başarısız, normal oluşturma")
+                db_custom_design = models.CustomDesign(**custom_design.model_dump())
+        else:
+            # STL dosyası bulunamazsa normal şekilde oluştur
+            print(f"CRUD: STL dosyası bulunamadı, normal oluşturma")
+            db_custom_design = models.CustomDesign(**custom_design.model_dump())
+    else:
+        # STL dosyası yoksa normal şekilde oluştur
+        print(f"CRUD: STL dosyası yok, normal oluşturma")
+        db_custom_design = models.CustomDesign(**custom_design.model_dump())
+    
+    print(f"CRUD: Custom design modeli oluşturuldu - {db_custom_design}")
+    
     db.add(db_custom_design)
     db.commit()
     db.refresh(db_custom_design)
+    
+    # Custom design oluşturulduktan sonra otomatik olarak sipariş oluştur
+    try:
+        # Sipariş verilerini hazırla
+        order_data = {
+            'customer_name': custom_design.customer_name,
+            'customer_phone': custom_design.customer_phone,
+            'customer_address': 'Özel Tasarım Talebi',
+            'products': 'Özel Tasarım',  # Özel tasarım olduğunu belirt
+            'total_price': 0,  # Fiyat henüz belirlenmedi
+            'status': 'Beklemede',
+            'order_type': 'custom_design',  # Özel tasarım olduğunu belirt
+            'custom_design_id': db_custom_design.id  # Custom design ID'sini sakla
+        }
+        
+        print(f"CRUD: Sipariş oluşturuluyor - {order_data}")
+        db_order = models.Order(**order_data)
+        db.add(db_order)
+        db.commit()
+        db.refresh(db_order)
+        
+        print(f"CRUD: Sipariş başarıyla oluşturuldu - ID: {db_order.id}")
+        
+    except Exception as e:
+        print(f"CRUD: Sipariş oluşturma hatası - {e}")
+        # Sipariş oluşturulamazsa bile custom design kaydedilmiş olur
+    
+    print(f"CRUD: Custom design başarıyla oluşturuldu - ID: {db_custom_design.id}")
     return db_custom_design 

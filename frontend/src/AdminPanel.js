@@ -101,8 +101,20 @@ function AdminPanel() {
     navigate("/giris");
   };
 
-  const renderOrderProducts = (orderProducts) => {
+  const renderOrderProducts = (orderProducts, orderType) => {
     if (!orderProducts) return null;
+    
+    // Özel tasarım talebi ise
+    if (orderType === "custom_design") {
+      return (
+        <div className="custom-design-order">
+          <p><strong>📋 Özel Tasarım Talebi</strong></p>
+          <p>Bu sipariş özel tasarım talebidir. Müşteri özel tasarım göndermiştir.</p>
+        </div>
+      );
+    }
+    
+    // Normal ürün siparişi ise
     const items = orderProducts.split(",").map(item => {
       const [pid, qty] = item.split("x");
       const product = products.find(p => String(p.id) === String(pid));
@@ -180,7 +192,36 @@ function AdminPanel() {
                   <p className="design-phone">Telefon: {design.customer_phone}</p>
                   <p className="design-description">{design.description}</p>
                   {design.file_path && (
-                    <p className="design-file">Dosya: {design.file_path}</p>
+                    <div className="design-file-section">
+                      <p className="design-file">Dosya: {design.file_path}</p>
+                      <button 
+                        className="download-stl-btn"
+                        onClick={() => handleDownloadSTL(design.id, design.file_path)}
+                      >
+                        📥 STL Dosyasını İndir
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Filament analiz bilgileri */}
+                  {design.weight_grams && (
+                    <div className="filament-analysis">
+                      <h4>🔬 Filament Analizi</h4>
+                      <div className="filament-grid">
+                        <div className="filament-item">
+                          <span className="filament-label">Filament Ağırlığı:</span>
+                          <span className="filament-value">{design.weight_grams?.toFixed(1)} g</span>
+                        </div>
+                        <div className="filament-item">
+                          <span className="filament-label">Baskı Süresi:</span>
+                          <span className="filament-value">{design.print_time_hours?.toFixed(1)} saat</span>
+                        </div>
+                        <div className="filament-item">
+                          <span className="filament-label">Tahmini Satış Fiyatı:</span>
+                          <span className="filament-value">{design.sales_price} TL</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               ))
@@ -209,7 +250,7 @@ function AdminPanel() {
                   <p className="order-phone">{order.customer_phone}</p>
                   <div className="order-products">
                     <b>Ürünler:</b>
-                    {renderOrderProducts(order.products)}
+                    {renderOrderProducts(order.products, order.order_type)}
                   </div>
                   {order.status !== 'Tamamlandı' && (
                     <button 
@@ -337,6 +378,34 @@ function AdminPanel() {
       }
     }
   }
+
+  const handleDownloadSTL = async (customDesignId, filename) => {
+    try {
+      const response = await fetch(`http://localhost:8000/download-stl/${customDesignId}`);
+      
+      if (response.ok) {
+        // Dosyayı blob olarak al
+        const blob = await response.blob();
+        
+        // Dosyayı indir
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename || 'design.stl';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        console.log('STL dosyası başarıyla indirildi');
+      } else {
+        alert('Dosya indirme hatası: ' + response.statusText);
+      }
+    } catch (error) {
+      console.error('Dosya indirme hatası:', error);
+      alert('Dosya indirilirken hata oluştu.');
+    }
+  };
 }
 
 export default AdminPanel; 

@@ -58,6 +58,8 @@ class Order(Base):
     total_price = Column(Float)
     products = Column(String) # For simplicity, storing product IDs as a comma-separated string
     status = Column(String, default="Beklemede")  # Beklemede, Tamamlandı, İptal
+    order_type = Column(String, default="normal")  # normal, custom_design
+    custom_design_id = Column(Integer, nullable=True)  # Custom design ID'si
 
 
 class CustomDesign(Base):
@@ -68,4 +70,9 @@ class CustomDesign(Base):
     customer_phone = Column(String)
     description = Column(String)
     file_path = Column(String, nullable=True)
-    created_at = Column(String)  # ISO format string 
+    created_at = Column(String)  # ISO format string
+    # Filament analiz bilgileri
+    weight_grams = Column(Float, nullable=True)
+    print_time_hours = Column(Float, nullable=True)
+    sales_price = Column(String, nullable=True)
+    infill_ratio = Column(Float, nullable=True) 

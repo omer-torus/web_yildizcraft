@@ -106,6 +106,8 @@ class OrderBase(BaseModel):
     total_price: float
     products: str
     status: str = "Beklemede"
+    order_type: str = "normal"
+    custom_design_id: Optional[int] = None
 
 class OrderCreate(OrderBase):
     pass
@@ -123,6 +125,11 @@ class CustomDesignBase(BaseModel):
     description: str
     file_path: Optional[str] = None
     created_at: str
+    # Filament analiz bilgileri
+    weight_grams: Optional[float] = None
+    print_time_hours: Optional[float] = None
+    sales_price: Optional[str] = None
+    infill_ratio: Optional[float] = None
 
 class CustomDesignCreate(CustomDesignBase):
     pass

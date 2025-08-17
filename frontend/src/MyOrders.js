@@ -64,8 +64,20 @@ function MyOrders() {
     }
   };
 
-  const renderOrderProducts = (orderProducts) => {
+  const renderOrderProducts = (orderProducts, orderType) => {
     if (!orderProducts) return null;
+    
+    // Özel tasarım talebi ise
+    if (orderType === "custom_design") {
+      return (
+        <div className="custom-design-order">
+          <p><strong>📋 Özel Tasarım Talebi</strong></p>
+          <p>Bu sipariş özel tasarım talebinizdir. Tasarımınız hazırlandığında size bilgi verilecektir.</p>
+        </div>
+      );
+    }
+    
+    // Normal ürün siparişi ise
     const items = orderProducts.split(",").map(item => {
       const [pid, qty] = item.split("x");
       return `Ürün ID: ${pid} (${qty} adet)`;
@@ -125,7 +137,7 @@ function MyOrders() {
                 </p>
                 <div className="order-products">
                   <strong>Ürünler:</strong>
-                  {renderOrderProducts(order.products)}
+                  {renderOrderProducts(order.products, order.order_type)}
                 </div>
               </div>
             </div>

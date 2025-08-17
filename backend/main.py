@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI, HTTPException, File, UploadFile, status, Request
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 import json
@@ -223,25 +224,105 @@ def get_user_orders(customer_name: str, customer_phone: str, db: Session = Depen
 async def create_custom_design(request: Request, db: Session = Depends(get_db)):
     try:
         body = await request.json()
+        print(f"Gelen custom design verisi: {body}")
         custom_design_data = schemas.CustomDesignCreate(**body)
-        return crud.create_custom_design(db=db, custom_design=custom_design_data)
+        result = crud.create_custom_design(db=db, custom_design=custom_design_data)
+        print(f"Custom design oluşturuldu: {result}")
+        return result
     except Exception as e:
         print(f"Error creating custom design: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Custom design oluşturma hatası: {str(e)}")
 
 @app.get("/custom-designs/", response_model=list[schemas.CustomDesign])
 def read_custom_designs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     custom_designs = crud.get_custom_designs(db, skip=skip, limit=limit)
     return custom_designs
 
+@app.get("/download-stl/{custom_design_id}")
+def download_stl_file(custom_design_id: int, db: Session = Depends(get_db)):
+    """STL dosyasını indir"""
+    try:
+        # Custom design'ı veritabanından al
+        custom_design = crud.get_custom_design_by_id(db, custom_design_id)
+        if not custom_design:
+            raise HTTPException(status_code=404, detail="Özel tasarım bulunamadı")
+        
+        # Dosya yolunu kontrol et
+        if not custom_design.file_path:
+            raise HTTPException(status_code=404, detail="STL dosyası bulunamadı")
+        
+        # Dosya yolunu oluştur
+        file_path = os.path.join("uploads", custom_design.file_path)
+        
+        # Dosyanın var olup olmadığını kontrol et
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="STL dosyası sistemde bulunamadı")
+        
+        # Dosyayı indir
+        return FileResponse(
+            path=file_path,
+            filename=custom_design.file_path,
+            media_type="application/octet-stream"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Dosya indirme hatası: {str(e)}")
+
 @app.post("/upload-stl/")
 def upload_stl(name: str = "", description: str = "", file: UploadFile = File(...)):
-    # Sadece .stl dosyası kabul et
-    if not file.filename.lower().endswith(".stl"):
-        raise HTTPException(status_code=400, detail="Sadece .stl dosyaları kabul edilir.")
-    uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
-    os.makedirs(uploads_dir, exist_ok=True)
-    file_path = os.path.join(uploads_dir, file.filename)
-    with open(file_path, "wb") as f:
-        f.write(file.file.read())
-    return {"message": "Dosya başarıyla yüklendi.", "filename": file.filename, "name": name, "description": description} 
+    try:
+        print(f"📤 Upload isteği: {file.filename}")
+        
+        # Sadece .stl dosyası kabul et
+        if not file.filename.lower().endswith(".stl"):
+            raise HTTPException(status_code=400, detail="Sadece .stl dosyaları kabul edilir.")
+        
+        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(uploads_dir, exist_ok=True)
+        file_path = os.path.join(uploads_dir, file.filename)
+        
+        print(f"💾 Dosya kaydediliyor: {file_path}")
+        
+        # Dosyayı kaydet
+        with open(file_path, "wb") as f:
+            f.write(file.file.read())
+        
+        print(f"✅ Dosya kaydedildi")
+        
+        # STL analizi yap
+        try:
+            print(f"🔬 STL analizi başlıyor...")
+            from stl_analyzer import STLAnalyzer
+            analyzer = STLAnalyzer()
+            analysis_result = analyzer.analyze_stl_file(file_path)
+            
+            print(f"📊 Analiz sonucu: {analysis_result}")
+            
+            if analysis_result:
+                return {
+                    "message": "Dosya başarıyla yüklendi ve analiz edildi.",
+                    "filename": file.filename,
+                    "name": name,
+                    "description": description,
+                    "analysis": analysis_result
+                }
+            else:
+                return {
+                    "message": "Dosya yüklendi fakat analiz edilemedi.",
+                    "filename": file.filename,
+                    "name": name,
+                    "description": description
+                }
+        except Exception as e:
+            print(f"❌ STL analizi sırasında hata: {e}")
+            return {
+                "message": "Dosya yüklendi fakat analiz edilemedi.",
+                "filename": file.filename,
+                "name": name,
+                "description": description
+            }
+    except Exception as e:
+        print(f"❌ Upload hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Dosya yükleme hatası: {str(e)}") 

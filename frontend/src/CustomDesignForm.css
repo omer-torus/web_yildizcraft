@@ -1,0 +1,105 @@
+.custom-design-form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.custom-design-form h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.custom-design-form input,
+.custom-design-form textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.custom-design-form textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.custom-design-form button {
+  width: 100%;
+  padding: 12px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.custom-design-form button:hover {
+  background: #0056b3;
+}
+
+.form-message {
+  text-align: center;
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+/* Analiz sonuçları stilleri */
+.analysis-results {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.analysis-results h3 {
+  color: #495057;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.analysis-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: white;
+  border-radius: 5px;
+  border: 1px solid #dee2e6;
+}
+
+.analysis-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.analysis-value {
+  font-weight: 700;
+  color: #007bff;
+}
+
+.analysis-note {
+  font-size: 14px;
+  color: #6c757d;
+  text-align: center;
+  font-style: italic;
+  margin: 0;
+} 

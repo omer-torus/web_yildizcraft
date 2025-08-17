@@ -198,6 +198,76 @@
   margin: 5px 0;
 }
 
+.design-file-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 5px 0;
+}
+
+.download-stl-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.download-stl-btn:hover {
+  background: #218838;
+}
+
+/* Filament analiz stilleri */
+.filament-analysis {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e8f4fd;
+  border-radius: 8px;
+  border: 1px solid #bee5eb;
+}
+
+.filament-analysis h4 {
+  color: #0c5460;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.filament-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.filament-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 5px;
+  border: 1px solid #d1ecf1;
+}
+
+.filament-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.filament-value {
+  font-weight: 700;
+  color: #0c5460;
+  font-size: 0.9rem;
+}
+
 .add-product-section {
   max-width: 600px;
 }
